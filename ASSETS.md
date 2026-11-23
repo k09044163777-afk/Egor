@@ -8,7 +8,7 @@
 
 Логотип `public/logo-original.png` предоставлен пользователем. Оригинал сохранён без изменений; в интерфейсе используется CSS-кадрирование внешних полей.
 
-Иллюстрации созданы встроенным Imagegen и сохранены в проекте как WebP:
+Для обложки и услуг подготовлены декоративные иллюстрации в формате WebP:
 
 - `public/images/hero.webp`: wide cinematic professional spray-painting booth, graphite unbranded sedan and painter on the right, dark negative space on the left, silver reflections and amber lights, no text or logos.
 - `public/images/services.webp`: three equal photo panels, metal panel repair, spray painting and welding, coherent graphite/silver and warm amber grading, no text, no logos.
