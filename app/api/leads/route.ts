@@ -1,4 +1,5 @@
 import {env} from "cloudflare:workers";
+import {notifyTelegram} from "../../../lib/telegram";
 import {getPhotoStorage} from "../../../lib/photo-storage";
 import {getDb} from "../../../db";
 import {leads} from "../../../db/schema";
@@ -45,7 +46,7 @@ export async function POST(request:Request){
  async function deliver(endpoint:string,payload:unknown,headers:Record<string,string>={}){try{const res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(payload),signal:AbortSignal.timeout(8000)});return res.ok?"sent":"failed";}catch{return "failed";}}
  const [emailStatus,telegramStatus]=await Promise.all([
   env.RESEND_API_KEY&&env.NOTIFICATION_FROM_EMAIL?deliver("https://api.resend.com/emails",{from:env.NOTIFICATION_FROM_EMAIL,to:[env.NOTIFICATION_EMAIL||"Cherepanov1945@icloud.ru"],subject:`Малярка43: заявка от ${fields.name.replace(/[\r\n]/g," ")}`,text},{Authorization:`Bearer ${env.RESEND_API_KEY}`}):Promise.resolve("not_configured"),
-  env.TELEGRAM_BOT_TOKEN&&env.TELEGRAM_CHAT_ID?deliver(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,{chat_id:env.TELEGRAM_CHAT_ID,text}):Promise.resolve("not_configured")
+  notifyTelegram(text,url.origin)
  ]);
  await db.update(leads).set({emailStatus,telegramStatus}).where(eq(leads.id,fields.id));
  return json({id:fields.id,notified:emailStatus==="sent"||telegramStatus==="sent"},201);

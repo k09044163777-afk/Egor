@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {randomBytes} from 'node:crypto';
+import {encryptBotToken,decryptBotToken,webhookSecret,secureEqual,newConnectNonce,hashNonce} from '../lib/telegram-security.ts';
+import {botReply,botCommands} from '../lib/telegram-menu.ts';
+import {privateBotMessage} from '../lib/telegram-update.ts';
+const key=randomBytes(32).toString('base64url');
+const token='private-sample-value-for-encryption-test';
+const first=await encryptBotToken(token,key),second=await encryptBotToken(token,key);
+assert.notEqual(first,second,'Each stored token has a fresh encryption nonce');
+assert.ok(!first.includes(token));assert.equal(await decryptBotToken(first,key),token);
+await assert.rejects(()=>decryptBotToken(first.slice(0,-4)+'AAAA',key));
+await assert.rejects(()=>decryptBotToken(first,randomBytes(32).toString('base64url')));
+assert.equal(await secureEqual('одинаково','одинаково'),true);assert.equal(await secureEqual('abc','abcd'),false);
+assert.equal(await secureEqual('left','right'),false);
+const secret=await webhookSecret(key);assert.match(secret,/^[A-Za-z0-9_-]{43}$/);assert.equal(secret,await webhookSecret(key));
+assert.notEqual(secret,await webhookSecret(randomBytes(32).toString('base64url')));
+const nonce=newConnectNonce();assert.match(nonce,/^[A-Za-z0-9_-]{32}$/);assert.notEqual(nonce,newConnectNonce());assert.notEqual(nonce,await hashNonce(nonce));
+const origin='https://example.com';
+assert.ok(!JSON.stringify(botReply('status',origin,false)).includes('/manage'));
+assert.ok(JSON.stringify(botReply('status',origin,true)).includes('/manage'));
+for(const action of ['start','services','contacts','photo','help']){
+ const reply=botReply(action,origin);assert.ok(reply.text.length>20);assert.ok(reply.reply_markup.inline_keyboard.length>0);
+ assert.ok(!/chatgpt|openai|imagegen|нейросет/i.test(reply.text));
+ for(const row of reply.reply_markup.inline_keyboard)for(const button of row)assert.ok(button.callback_data||button.url?.startsWith('https://'));
+}
+assert.ok(botCommands.every(command=>/^[a-z]+$/.test(command.command)));
+const message={message_id:1,chat:{id:123,type:'private'},from:{id:123},text:'/start'};
+assert.equal(privateBotMessage({update_id:1,message}),message);
+assert.equal(privateBotMessage({update_id:2,message:{...message,chat:{id:-1,type:'group'}}}),null);
+assert.equal(privateBotMessage({update_id:3,message:{...message,from:{id:123,is_bot:true}}}),null);
+const callbackMessage={...message,from:{id:999,is_bot:true}};
+assert.equal(privateBotMessage({update_id:4,callback_query:{id:'callback',from:{id:123},message:callbackMessage,data:'services'}}),callbackMessage,'Buttons on a bot message must remain usable');
+assert.equal(privateBotMessage({update_id:5,callback_query:{id:'callback',from:{id:456},message:callbackMessage,data:'services'}}),null);
+console.log('Telegram checks passed: authenticated encryption, tamper rejection, webhook secret, private owner links, menu visibility, private chats and callback ownership.');

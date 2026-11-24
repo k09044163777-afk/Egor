@@ -12,5 +12,6 @@ declare namespace Cloudflare {
     RESEND_API_KEY?: string;
     TELEGRAM_BOT_TOKEN?: string;
     TELEGRAM_CHAT_ID?: string;
+    TELEGRAM_STORAGE_KEY?: string;
   }
 }

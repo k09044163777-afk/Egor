@@ -31,6 +31,7 @@ Cloudflare D1 используется через привязку DB, Workers K
 - NOTIFICATION_EMAIL — получатель почтовых уведомлений.
 - NOTIFICATION_FROM_EMAIL и RESEND_API_KEY — отправитель и ключ почтового сервиса.
 - TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID — бот и получатель сообщений.
+- TELEGRAM_STORAGE_KEY — ключ шифрования настроек бота. При подключении через закрытую форму токен хранится в D1 зашифрованным; получатель привязывается по одноразовой ссылке. Постоянно сохраняйте этот ключ между публикациями.
 
 Значения задаются средствами хостинга и не хранятся в Git. После изменения переменных окружения требуется применить их к публикации и проверить доставку уведомлений.
 
@@ -51,8 +52,11 @@ node scripts/check-car-model.mjs
 ~~~sh
 npm run build
 npx wrangler d1 execute DB --remote --config wrangler.jsonc --file drizzle/0000_bitter_excalibur.sql
+npx wrangler d1 execute DB --remote --config wrangler.jsonc --file drizzle/0001_telegram_bot.sql
 npx wrangler deploy --config dist/server/wrangler.json
 npx wrangler secret put ADMIN_PASSWORD --config wrangler.jsonc
 ~~~
 
 Не включайте платный план для временной публикации. При достижении лимитов бесплатного тарифа отдельные запросы могут отклоняться хостингом. Собственный домен подключается позже, без изменения компонентов страницы.
+
+Существующая база уже содержит применённые миграции. Не повторяйте создание таблиц при обычном обновлении кода. Проверка логики Telegram: node scripts/check-telegram.mjs. Настройка для владельца описана в TELEGRAM.md.

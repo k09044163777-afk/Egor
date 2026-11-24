@@ -8,6 +8,13 @@
       "when": 1795379363035,
       "tag": "0000_bitter_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1795522099155,
+      "tag": "0001_telegram_bot",
+      "breakpoints": true
     }
   ]
 }

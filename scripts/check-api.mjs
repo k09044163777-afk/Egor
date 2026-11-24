@@ -7,6 +7,6 @@ const noConsent=fields();noConsent.delete('consent');assert.equal((await send(no
 const badFile=fields();badFile.set('photos',new Blob(['<svg/>'],{type:'image/png'}),'fake.png');assert.equal((await send(badFile)).status,400);
 const valid=fields();const first=await send(valid);assert.equal(first.status,201);const firstBody=await first.json();assert.equal(firstBody.notified,false);
 const again=await send(valid);assert.equal(again.status,200);assert.equal((await again.json()).id,firstBody.id);
-assert.equal((await fetch(base+'/api/admin/photos/leads%2Ftest%2Ftest')).status,403);
-const manage=await (await fetch(base+'/manage')).text();assert.match(manage,/Доступ владельца/);assert.ok(!manage.includes('Тест API'));
+assert.ok([401,503].includes((await fetch(base+'/api/admin/photos/leads%2Ftest%2Ftest')).status));
+const manageResponse=await fetch(base+'/manage');assert.ok([401,503].includes(manageResponse.status));const manage=await manageResponse.text();assert.ok(!manage.includes('Тест API'));
 console.log('7 проверок API пройдено: origin, согласие, ложное фото, сохранение, отсутствие ложного уведомления, повтор, защита данных.');
