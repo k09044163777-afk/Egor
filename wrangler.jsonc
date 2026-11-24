@@ -1,0 +1,12 @@
+{
+ "name":"malyarka43",
+ "account_id":"07d24fcf5a05c03aae50263db56bb6a3",
+ "main":"worker/cloudflare.ts",
+ "compatibility_date":"2026-05-15",
+ "compatibility_flags":["nodejs_compat"],
+ "workers_dev":true,
+ "d1_databases":[{"binding":"DB","database_name":"malyarka43-leads","database_id":"2ee35be9-fff6-47a3-b699-2d37f802bca2","migrations_dir":"drizzle"}],
+ "kv_namespaces":[{"binding":"PHOTO_STORE","id":"de8845650348451b859b755cd71e93ba"}],
+ "vars":{"AUTH_MODE":"password","ADMIN_USER":"danil","NOTIFICATION_EMAIL":"Cherepanov1945@icloud.ru"},
+ "observability":{"enabled":true}
+}

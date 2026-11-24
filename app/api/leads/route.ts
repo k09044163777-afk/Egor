@@ -1,4 +1,5 @@
 import {env} from "cloudflare:workers";
+import {getPhotoStorage} from "../../../lib/photo-storage";
 import {getDb} from "../../../db";
 import {leads} from "../../../db/schema";
 import {and,eq,gte,sql} from "drizzle-orm";
@@ -10,7 +11,8 @@ export async function POST(request:Request){
  if(request.headers.get("origin")!==url.origin)return json({error:"Не удалось проверить источник заявки. Обновите страницу."},403);
  if(!request.headers.get("content-type")?.includes("multipart/form-data"))return json({error:"Неверный формат заявки."},415);
  if(Number(request.headers.get("content-length")||0)>16*1024*1024)return json({error:"Размер заявки превышает 16 МБ."},413);
- if(!env.DB||!env.BUCKET)return json({error:"Онлайн-запись временно недоступна. Позвоните Данилу или напишите в Telegram."},503);
+ const photoStorage=getPhotoStorage();
+ if(!env.DB||!photoStorage)return json({error:"Онлайн-запись временно недоступна. Позвоните Данилу или напишите в Telegram."},503);
  let data:FormData;
  try{data=await request.formData();}catch{return json({error:"Не удалось прочитать заявку. Уменьшите размер фотографий."},400);}
  if(data.get("website"))return json({error:"Не удалось проверить заявку. Свяжитесь с нами по телефону."},400);
@@ -33,10 +35,10 @@ export async function POST(request:Request){
  }
  const stored:{key:string;type:string;name:string}[]=[];
  try{
-  for(const {file,type} of checked){const key=`leads/${fields.id}/${crypto.randomUUID()}`;await env.BUCKET.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:type}});stored.push({key,type,name:file.name.slice(0,120)});}
+  for(const {file,type} of checked){const key=`leads/${fields.id}/${crypto.randomUUID()}`;await photoStorage.put(key,await file.arrayBuffer(),type);stored.push({key,type,name:file.name.slice(0,120)});}
   await db.insert(leads).values({...fields,createdAt:new Date().toISOString(),photos:JSON.stringify(stored),consentVersion:"2026-11-22",fingerprint,emailStatus:"not_configured",telegramStatus:"not_configured"});
  }catch{
-  await Promise.allSettled(stored.map(p=>env.BUCKET!.delete(p.key)));
+  await Promise.allSettled(stored.map(p=>photoStorage.delete(p.key)));
   return json({error:"Не удалось сохранить заявку. Попробуйте ещё раз или напишите Данилу."},503);
  }
  const text=`Новая заявка — Малярка43\n№ ${fields.id.slice(0,8)}\nИмя: ${fields.name}\nТелефон: ${fields.phone}\nАвтомобиль: ${fields.car||"Не указан"}\nУслуга: ${fields.service}\nДата (пожелание): ${fields.preferredDate||"Согласовать"}\nОписание: ${fields.description||"Не указано"}\nФото: ${stored.length}\nВсе данные и фото: ${url.origin}/manage`;
